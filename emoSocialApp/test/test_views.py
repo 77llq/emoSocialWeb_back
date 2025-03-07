@@ -7,7 +7,10 @@ from emoSocialApp.views.AdminViews.CreateAdminAccount import CreateAdminAccountV
 from emoSocialApp.Serializers.RegisterSerializers import AccountSerializers, AccountProfileSerializers
 from emoSocialApp.views.CheckToken import CheckTokenView
 from rest_framework_simplejwt.tokens import AccessToken
+from emoSocialApp.views.FunctionViews.Emails.SendEmails import SendEmailView as SendEmailView
 
+
+#######AdminViews
 class accountViewTest(TestCase):
     def setUp(self):
 
@@ -193,7 +196,7 @@ class checkTokenTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode('utf-8'), '123')
 
-
+#########Emails
 class checkEmailTest(TestCase) :
     def setUp(self):
         self.client = APIClient()
@@ -302,3 +305,96 @@ class checkEmailContent(TestCase):
         self.assertEqual(email_info['receive_name'], 'Receiver User')
         self.assertEqual(email_info['email_content'], 'Test Content')
         self.assertEqual(email_info['receive_email'], 'receiver@test.com')
+
+class deleteEmailTest(TestCase) :
+    def setUp(self):
+        self.client = APIClient()
+
+        self.sender = User.objects.create(
+            id='123',
+            account='sender',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.receiver = User.objects.create(
+            id='456',
+            account='receiver',
+            password='password456',
+            type='普通用户',
+            idNumber='987654321098765432'
+        )
+
+        self.email = Email.objects.create(
+            id='123',
+            emailTopic='Test Topic',
+            emailContent='Test Content',
+            sendTime='2025-01-01 12:00:00',
+            sendId=self.sender,
+            receiveId=self.receiver
+        )
+
+    def test_delete_email_success(self):
+        response = self.client.delete('/deleteEmails_apis/', {'email_id': '123'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+class sendEmailTest(TestCase) :
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.sender = User.objects.create(
+            id='123',
+            account='sender',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+        self.receiver = User.objects.create(
+            id='456',
+            account='receiver',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.sender_profile = UserProfile.objects.create(
+            id=self.sender,
+            name='Sender User',
+            email='sender@test.com',
+            birthday='2000-01-01'
+        )
+
+        self.receiver_profile = UserProfile.objects.create(
+            id=self.receiver,
+            name='Receiver User',
+            email='receiver@test.com',
+            birthday='2000-01-01'
+        )
+
+        self.token = str(AccessToken.for_user(self.sender))
+def test_sen_email(self):
+    SendEmailView.time_trans()
+    data = {
+            'email_info': {
+                '_value': {
+                    'token': self.token,
+                    'receive_id': '789',
+                    'receive_email': 'receiver@example.com',
+                    'email_topic': 'Test Topic',
+                    'email_content': 'Test Content'
+                }
+            }
+        }
+
+    response = self.client.post('/sendEmails_apis/', data, format='json')
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    self.assertEqual(response.data['code'], 'success')
+
+    email = Email.objects.get(receiveId=self.receiver)
+    self.assertEqual(email.emailTopic, 'Test Topic')
+    self.assertEqual(email.emailContent, 'Test Content')
+    self.assertEqual(email.sendId, self.sender)
+    self.assertEqual(email.receiveId, self.receiver)
+
