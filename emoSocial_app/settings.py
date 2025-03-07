@@ -47,8 +47,7 @@ INSTALLED_APPS = [
     'emoSocialApp',
     'corsheaders',
     'rest_framework_simplejwt',
-    'channels',
-    'rest_framework_jwt'
+    'channels'
 ]
 
 MIDDLEWARE = [

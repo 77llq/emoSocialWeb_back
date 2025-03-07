@@ -2,7 +2,7 @@ from django.test import TestCase, RequestFactory
 
 from rest_framework.test import APIClient
 from rest_framework import status
-from emoSocialApp.models import User, UserProfile, Moments, MomentsLike, Board, Email, FriendsRequest, Friends
+from emoSocialApp.models import User, UserProfile, Moments, MomentsLike, Board, Email, FriendsRequest, Friends, Fans
 from emoSocialApp.views.AdminViews.CreateAdminAccount import CreateAdminAccountView
 from emoSocialApp.Serializers.RegisterSerializers import AccountSerializers, AccountProfileSerializers
 from emoSocialApp.views.CheckToken import CheckTokenView
@@ -402,10 +402,8 @@ def test_sen_email(self):
 
 class accepetfriend(TestCase) :
     def setUp(self):
-        # 创建测试客户端
         self.client = APIClient()
 
-        # 创建测试用户（发送者）
         self.sender = User.objects.create(
             id='123',
             account='sender',
@@ -414,7 +412,6 @@ class accepetfriend(TestCase) :
             idNumber='123456789012345678'
         )
 
-        # 创建测试用户（接收者）
         self.receiver = User.objects.create(
             id='456',
             account='receiver',
@@ -629,3 +626,467 @@ class checkNewFriends(TestCase):
         self.assertEqual(request_info[0]['name'], 'Sender User')
         self.assertEqual(request_info[0]['signature'], 'Test Signature')
         self.assertEqual(request_info[0]['id'], '456')
+
+"""
+class deleteFriendsTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.user2 = UserProfile.objects.create(
+            id=self.user2,
+            signature='Test Signature',
+            avatar='avatar_url',
+            name='Friend User',
+            birthday='2000-01-01'
+        )
+
+        self.token = str(AccessToken.for_user(self.user1))
+    def test_delete_friends_success(self):
+
+        params = {
+            'token': self.token,
+            'target_account': 'friendtest'
+        }
+
+        self.client.get('/addNewFriend_apis/', params)
+
+        response = self.client.delete('/deteletFriends_apis/', {
+            'delete_id': self.user2.id,
+            'token': self.token
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'success'})
+"""
+
+class followTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+        self.user2 = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+        self.token = str(AccessToken.for_user(self.user))
+    
+    def test_follow_user(self): 
+        data = {
+            'token': self.token,
+            'follow_id': self.user2.id
+        }
+
+        response = self.client.post('/follow_apis/', data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'success'})
+        self.assertTrue(Fans.objects.filter(userId=self.user2, fansId=self.user).exists())
+
+    def test_follow_user_already_followed(self):
+        Fans.objects.create(userId=self.user2, fansId=self.user)
+
+        data = {
+            'token': self.token,
+            'follow_id': self.user2.id
+        }
+
+        response = self.client.post('/follow_apis/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'already'})
+
+class getFollowTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.user3 = User.objects.create(
+            id='789',
+            account='friendtest2',
+            password='password4567',
+            type='普通用户',
+            idNumber='123456789012345670'
+        )
+
+        self.user1 = UserProfile.objects.create(
+            id=self.user1,
+            name='user1',
+            avatar='avatar_url1',
+            signature='Test1 Signature',
+            birthday='2000-01-01'
+        )
+        self.user2 = UserProfile.objects.create(
+            id=self.user2,
+            name='user2',
+            avatar='avatar_url2',
+            signature='Test2 Signature',
+            birthday='2000-01-01'
+        )
+        self.user3 = UserProfile.objects.create(
+            id=self.user3,
+            name='user3',
+            avatar='avatar_url3',
+            signature='Test3 Signature',
+            birthday='2000-01-01'
+        )
+
+        Fans.objects.create(userId=self.user2.id, fansId=self.user1.id)
+        Fans.objects.create(userId=self.user3.id, fansId=self.user1.id)
+
+        self.token = str(AccessToken.for_user(self.user1))
+    def test_get_follow_list_success(self):
+        query_params = {
+            'token': self.token
+        }
+
+        response = self.client.get('/getFollowInfo_apis/', query_params)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['user_info']), 2) 
+
+        expected_data = [
+            {
+                'user_id': str(self.user2.id),
+                'name': 'user2',
+                'avatar': 'avatar_url2'
+            },
+            {
+                'user_id': str(self.user3.id),
+                'name': 'user3',
+                'avatar': 'avatar_url3'
+            }
+        ]
+        self.assertEqual(response.data['user_info'], expected_data)
+
+class getFolloingInfoTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.user3 = User.objects.create(
+            id='789',
+            account='friendtest2',
+            password='password4567',
+            type='普通用户',
+            idNumber='123456789012345670'
+        )
+
+        self.user1 = UserProfile.objects.create(
+            id=self.user1,
+            name='user1',
+            avatar='avatar_url1',
+            signature='Test1 Signature',
+            birthday='2000-01-01'
+        )
+        self.user2 = UserProfile.objects.create(
+            id=self.user2,
+            name='user2',
+            avatar='avatar_url2',
+            signature='Test2 Signature',
+            birthday='2000-01-01'
+        )
+        self.user3 = UserProfile.objects.create(
+            id=self.user3,
+            name='user3',
+            avatar='avatar_url3',
+            signature='Test3 Signature',
+            birthday='2000-01-01'
+        )
+
+        Fans.objects.create(userId=self.user1.id, fansId=self.user2.id)
+        Fans.objects.create(userId=self.user1.id, fansId=self.user3.id)
+
+        self.token = str(AccessToken.for_user(self.user1))
+    def test_get_following_list_success(self):
+        query_params = {
+            'token': self.token
+        }
+
+        response = self.client.get('/getFollowingInfo_apis/', query_params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['fans_info']), 2)  
+
+        expected_data = [
+            {
+                'fans_id': str(self.user2.id), 
+                'name': 'user2',
+                'avatar': 'avatar_url2'
+            },
+            {
+                'fans_id': str(self.user3.id),  
+                'name': 'user3',
+                'avatar': 'avatar_url3'
+            }
+        ]
+        self.assertEqual(response.data['fans_info'], expected_data)
+
+class getFriendInfoTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.user3 = User.objects.create(
+            id='789',
+            account='friendtest2',
+            password='password4567',
+            type='普通用户',
+            idNumber='123456789012345670'
+        )
+
+        self.user1 = UserProfile.objects.create(
+            id=self.user1,
+            name='user1',
+            avatar='avatar_url1',
+            signature='Test1 Signature',
+            birthday='2000-01-01'
+        )
+        self.user2 = UserProfile.objects.create(
+            id=self.user2,
+            name='user2',
+            avatar='avatar_url2',
+            signature='Test2 Signature',
+            birthday='2000-01-01'
+        )
+        self.user3 = UserProfile.objects.create(
+            id=self.user3,
+            name='user3',
+            avatar='avatar_url3',
+            signature='Test3 Signature',
+            birthday='2000-01-01'
+        )
+
+        Friends.objects.create(userId=self.user1.id, friendId=self.user2.id, intimacy='5')
+        FriendsRequest.objects.create(sendRequestId=self.user3.id, receiveRequestId=self.user1.id)
+        self.token = str(AccessToken.for_user(self.user1))
+
+    def test_get_friends_info_success(self):
+        query_params = {
+            'token': self.token
+        }
+
+        response = self.client.get('/getFriendsInfo_apis/', query_params)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['friends_info']), 1) 
+
+        expected_data = [
+            {
+                'friend_id': str(self.user2.id), 
+                'friend_name': 'user2',
+                'friend_avatar': 'avatar_url2',
+                'friend_signature': 'Test2 Signature',
+                'intimacy': '5'
+            }
+        ]
+        self.assertEqual(response.data['friends_info'], expected_data)
+        self.assertEqual(response.data['newFriends_request'], 1)
+
+"""
+class rejectTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        FriendsRequest.objects.create(sendRequestId=self.user2, receiveRequestId=self.user1)
+        self.token = str(AccessToken.for_user(self.user1))
+    def test_reject_new_friends_success(self):
+        query_params = {
+            'token': self.token,
+            'apply_id': self.user2.id
+        }
+
+        response = self.client.delete('/rejectNewFriends_apis/', query_params)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, 'deleted')
+
+        self.assertFalse(FriendsRequest.objects.filter(sendRequestId=self.user2, receiveRequestId=self.user1).exists())
+"""
+
+class requestTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='user1',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='user2',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.token = str(AccessToken.for_user(self.user1))
+    def test_send_add_request_success(self):
+        data = {
+            'token': self.token,
+            'account': 'user2'
+        }
+
+        response = self.client.post('/sendAddRequest_apis/', data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'success'})
+        self.assertTrue(FriendsRequest.objects.filter(sendRequestId=self.user1, receiveRequestId=self.user2).exists())
+
+    def test_send_add_request_repeat(self):
+        FriendsRequest.objects.create(sendRequestId=self.user1, receiveRequestId=self.user2)
+
+        data = {
+            'token': self.token,
+            'account': 'user2'
+        }
+
+        response = self.client.post('/sendAddRequest_apis/', data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'repeat'})
+
+    def test_send_add_request_already_friends(self):
+        Friends.objects.create(userId=self.user1, friendId=self.user2)
+        Friends.objects.create(userId=self.user2, friendId=self.user1)
+
+        data = {
+            'token': self.token,
+            'account': 'user2'
+        }
+
+        response = self.client.post('/sendAddRequest_apis/', data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'already'})
+    def test_send_add_request_self(self):
+        data = {
+            'token': self.token,
+            'account': 'user1'
+        }
+
+        response = self.client.post('/sendAddRequest_apis/', data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'self'})
+
+"""
+class unfollowTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='user1',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.user2 = User.objects.create(
+            id='456',
+            account='user2',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+        Fans.objects.create(userId=self.user2, fansId=self.user1)
+        self.token = str(AccessToken.for_user(self.user1))
+
+    def test_unfollow_success(self):
+        query_params = {
+            'token': self.token,
+            'unfollow_id': self.user2.id
+        }
+
+        response = self.client.delete('/unfollow_apis/', query_params)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'code': 'success'})
+        self.assertFalse(Fans.objects.filter(userId=self.user2, fansId=self.user1).exists())
+"""
+

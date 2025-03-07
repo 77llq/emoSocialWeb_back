@@ -8,7 +8,7 @@ class UnfollowView(ModelViewSet):
     permission_classes = []
 
     def destroy(self, request, *args, **kwargs):
-        token = request.query_params.get('token')
+        token = request.data['token']
         user_id = jwt_decode_handler(token=token)['user_id']
         unfollow_id = request.query_params.get('unfollow_id')
         unfollow_user = User.objects.get(id=unfollow_id)

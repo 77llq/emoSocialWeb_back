@@ -12,4 +12,4 @@ class RejectNewFriendsView(ModelViewSet):
         apply_id = request.query_params.get('apply_id')
         user_id = user_id = jwt_decode_handler(token=token)['user_id']
         FriendsRequest.objects.filter(sendRequestId=apply_id, receiveRequestId=user_id).delete()
-        return Response('删除')
+        return Response('deleted')
