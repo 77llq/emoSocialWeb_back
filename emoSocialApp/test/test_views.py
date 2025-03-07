@@ -271,13 +271,15 @@ class checkEmailContent(TestCase):
         self.sender_profile = UserProfile.objects.create(
             id=self.sender,
             name='Sender User',
-            email='sender@test.com'
+            email='sender@test.com',
+            birthday='2000-01-01'
         )
 
         self.receiver_profile = UserProfile.objects.create(
             id=self.receiver,
             name='Receiver User',
-            email='receiver@test.com'
+            email='receiver@test.com',
+            birthday='2000-01-01'
         )
 
         self.email = Email.objects.create(
@@ -295,8 +297,8 @@ class checkEmailContent(TestCase):
         email_info = response.data['email_info']
         self.assertEqual(email_info['email_topic'], 'Test Topic')
         self.assertEqual(email_info['send_name'], 'Sender User')
-        self.assertEqual(email_info['send_email'], 'sender@example.com')
+        self.assertEqual(email_info['send_email'], 'sender@test.com')
         self.assertEqual(email_info['send_time'], '2025-01-01 12:00:00')
         self.assertEqual(email_info['receive_name'], 'Receiver User')
         self.assertEqual(email_info['email_content'], 'Test Content')
-        self.assertEqual(email_info['receive_email'], 'receiver@example.com')
+        self.assertEqual(email_info['receive_email'], 'receiver@test.com')
