@@ -2,7 +2,7 @@ from django.test import TestCase, RequestFactory
 
 from rest_framework.test import APIClient
 from rest_framework import status
-from emoSocialApp.models import User, UserProfile, Moments, MomentsLike, Board, Email
+from emoSocialApp.models import User, UserProfile, Moments, MomentsLike, Board, Email, FriendsRequest, Friends
 from emoSocialApp.views.AdminViews.CreateAdminAccount import CreateAdminAccountView
 from emoSocialApp.Serializers.RegisterSerializers import AccountSerializers, AccountProfileSerializers
 from emoSocialApp.views.CheckToken import CheckTokenView
@@ -398,3 +398,234 @@ def test_sen_email(self):
     self.assertEqual(email.sendId, self.sender)
     self.assertEqual(email.receiveId, self.receiver)
 
+#######Friends
+
+class accepetfriend(TestCase) :
+    def setUp(self):
+        # 创建测试客户端
+        self.client = APIClient()
+
+        # 创建测试用户（发送者）
+        self.sender = User.objects.create(
+            id='123',
+            account='sender',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        # 创建测试用户（接收者）
+        self.receiver = User.objects.create(
+            id='456',
+            account='receiver',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.sender_profile = UserProfile.objects.create(
+            id=self.sender,
+            name='Sender User',
+            email='sender@test.com',
+            birthday='2000-01-01'
+        )
+
+        self.receiver_profile = UserProfile.objects.create(
+            id=self.receiver,
+            name='Receiver User',
+            email='receiver@test.com',
+            birthday='2000-01-01'
+        )
+
+        self.token = str(AccessToken.for_user(self.sender))
+
+    def test_send_email(self):
+        data = {
+            'email_info': {
+                '_value': {
+                    'token': self.token,
+                    'receive_id': '456',
+                    'receive_email': 'receiver@test.com',
+                    'email_topic': 'Test Topic',
+                    'email_content': 'Test Content'
+                }
+            }
+        }
+
+        response = self.client.post('/sendEmails_apis/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'success')
+
+        email = Email.objects.get(receiveId=self.receiver)
+        self.assertEqual(email.emailTopic, 'Test Topic')
+        self.assertEqual(email.emailContent, 'Test Content')
+        self.assertEqual(email.sendId, self.sender)
+        self.assertEqual(email.receiveId, self.receiver)
+
+class addFriendById(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.target_friend = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.token = str(AccessToken.for_user(self.user))
+    def test_add_friend_success(self):
+        data = {
+            'token': self.token,
+            'postId': '456'
+        }
+
+        response = self.client.post('/addFriendsById_apis/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'success')
+        friend_request = FriendsRequest.objects.get(receiveRequestId=self.target_friend, sendRequestId=self.user)
+        self.assertIsNotNone(friend_request)
+
+    def test_add_friend_self(self):
+        data = {
+            'token': self.token,
+            'postId': '123'
+        }
+        response = self.client.post('/addFriendsById_apis/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'self')
+        self.assertFalse(FriendsRequest.objects.filter(receiveRequestId=self.user, sendRequestId=self.user).exists())
+    
+    def test_add_friend_repeat(self):
+        FriendsRequest.objects.create(receiveRequestId=self.target_friend, sendRequestId=self.user)
+        data = {
+            'token': self.token,
+            'postId': '456'
+        }
+
+        response = self.client.post('/addFriendsById_apis/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'repeat')
+
+    def test_add_friend_already(self):
+        Friends.objects.create(userId=self.user, friendId=self.target_friend)
+        data = {
+            'token': self.token,
+            'postId': '456'
+        }
+
+        response = self.client.post('/addFriendsById_apis/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'already')
+
+class addNewFriendsTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.target_friend = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.target_friend_profile = UserProfile.objects.create(
+            id=self.target_friend,
+            signature='Test Signature',
+            avatar='avatar_url',
+            name='Friend User',
+            birthday='2000-01-01'
+        )
+
+        self.token = str(AccessToken.for_user(self.user))
+
+    def test_add_new_friend_success(self):
+        params = {
+            'token': self.token,
+            'target_account': 'friendtest'
+        }
+
+        response = self.client.get('/addNewFriend_apis/', params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'success')
+        
+        target_info = response.data['target_info']
+        self.assertEqual(target_info['friend_signature'], 'Test Signature')
+        self.assertEqual(target_info['friend_avatar'], 'avatar_url')
+        self.assertEqual(target_info['friend_name'], 'Friend User')
+
+    def test_add_new_friend_error(self):
+        params = {
+            'token': self.token,
+            'target_account': 'friendtest2'
+        }
+
+        response = self.client.get('/addNewFriend_apis/', params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['code'], 'error')
+
+class checkNewFriends(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user = User.objects.create(
+            id='123',
+            account='usertest',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+
+        self.sender = User.objects.create(
+            id='456',
+            account='friendtest',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+
+        self.sender_profile = UserProfile.objects.create(
+            id=self.sender,
+            name='Sender User',
+            avatar='avatar_url',
+            signature='Test Signature',
+            birthday='2000-01-01'
+        )
+
+        self.friend_request = FriendsRequest.objects.create(
+            sendRequestId=self.sender,
+            receiveRequestId=self.user
+        )
+
+        self.token = str(AccessToken.for_user(self.user))
+    def test_check_new_friends_success(self):
+        params = {
+            'token': self.token
+        }
+        response = self.client.get('/checkNewFriends_apis/', params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        request_info = response.data['request_info']
+        self.assertEqual(len(request_info), 1)
+        self.assertEqual(request_info[0]['avatar'], 'avatar_url')
+        self.assertEqual(request_info[0]['name'], 'Sender User')
+        self.assertEqual(request_info[0]['signature'], 'Test Signature')
+        self.assertEqual(request_info[0]['id'], '456')
