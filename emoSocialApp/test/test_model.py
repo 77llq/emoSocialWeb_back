@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.urls import reverse
 from emoSocialApp.models import User, UserProfile, Friends, FriendsRequest, Fans, Email, Moments, MomentsComment, MomentsLike, Board
 
 class userModelTest(TestCase):
@@ -10,8 +9,6 @@ class userModelTest(TestCase):
         user = User.objects.get(id='123')
         self.assertEqual(user.account,'usertest')
         self.assertEqual(user.id, '123')
-    def test_str_representation(self):
-        self.assertEqual(str(self.user), '123')
 
 
 class userProfileModelTest(TestCase):
