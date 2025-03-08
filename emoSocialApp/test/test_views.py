@@ -1090,3 +1090,32 @@ class unfollowTest(TestCase):
         self.assertFalse(Fans.objects.filter(userId=self.user2, fansId=self.user1).exists())
 """
 
+class getFansTest(TestCase) :
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user1 = User.objects.create(
+            id='123',
+            account='user1',
+            password='password123',
+            type='普通用户',
+            idNumber='123456789012345678'
+        )
+        self.user2 = User.objects.create(
+            id='456',
+            account='user2',
+            password='password456',
+            type='普通用户',
+            idNumber='123456789012345679'
+        )
+        Fans.objects.create(userId=self.user2, fansId=self.user1)
+        Fans.objects.create(userId=self.user1, fansId=self.user2)
+        self.token = str(AccessToken.for_user(self.user1))
+    def test_get_fans_info_success(self):
+        query_params = {
+            'token': self.token
+        }
+        response = self.client.get('/getFansInfo_apis/', query_params)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'follow_num': 1, 'fans_num': 1})
