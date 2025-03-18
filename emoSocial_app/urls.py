@@ -53,18 +53,18 @@ from emoSocial_app import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # 验证token是否过期
+    
     path("checkToken/", CheckTokenView.checkToken),
-    # 登陆功能
+    
     path('register/', AccountView.as_view({"get": "list", "post": "create"})),
     path('checkAccount/', CheckAccountView.as_view({"post": "create"})),
     path('retrieveAccount/', RetrieveAccountView.as_view({"post": "create", "put": "update", "get": "list"})),
     path('login/', LoginView.as_view({"post": "create", "get": "list"})),
     path('getBoardContent/', GetBoardContentView.as_view({"get": "list"})),
-    # 编辑主页功能
+    
     path('editProfile_apis/', EditProfileView.as_view({"post": "create", "put": "update"})),
     path('getProfile_apis/', ProfileView.as_view({"get": "list"})),
-    # 好友功能
+    
     path('addNewFriend_apis/', AddNewFriendsView.as_view({"get": "list"})),
     path('sendAddRequest_apis/', SendAddRequestView.as_view({"post": "create"})),
     path('checkNewFriends_apis/', CheckNewFriendsView.as_view({"get": "list"})),
@@ -79,12 +79,12 @@ urlpatterns = [
     path('getFansInfo_apis/', GetFansInfoView.as_view({"get": "list"})),
     path('getFansInfoById_apis/', GetFansInfoByIdView.as_view({"get": "list"})),
     path('addFriendsById_apis/', AddFriendsByIdView.as_view({"post": "create"})),
-    # 邮件功能
+    
     path('sendEmails_apis/', SendEmailView.as_view({"post": "create"})),
     path('checkEmailBox_apis/', CheckEmailBoxView.as_view({"get": "list"})),
     path('checkEmailContent_apis/', CheckEmailContentView.as_view({"get": "list"})),
     path('deleteEmails_apis/', DeleteEmailsView.as_view({"delete": "destroy"})),
-    # 朋友圈功能
+    
     path('postMoment_apis/', PostMomentView.as_view({"post": "create"})),
     path('getSquareMoments_apis/', GetSquareMomentsView.as_view({"get": "list"})),
     path('commentMoments_apis/', CommentMomentsView.as_view({"post": "create"})),
@@ -95,7 +95,7 @@ urlpatterns = [
     path('deleteMoments_apis/', DeleteMomentsView.as_view({"delete": "destroy"})),
     path('getFriendsPersonalMoments_apis/', GetFriendsPersonalMomentsView.as_view({"get": "list"})),
     path('getStrangerProfile_apis/', GetStrangerProfileView.as_view({"get": "list"})),
-    # #
+    
     path("uploadAvatar_apis/", UploadAvatarView.saveImage),
     re_path(r'^media/user(?P<path>.*)$', serve, {'document_root': settings.USER_AVATAR_ROOT}),
     path("uploadProfileBp_apis/", UploadProfileBpView.saveImage),
@@ -104,7 +104,7 @@ urlpatterns = [
     re_path(r'^moments(?P<path>.*)$', serve, {'document_root': settings.USER_MOMENTS_PIC_ROOT}),
     path("uploadMomentsVideo_apis/", UploadVideoView.saveImage),
     re_path(r'^videos(?P<path>.*)$', serve, {'document_root': settings.USER_MOMENTS_VIDEO_ROOT}),
-    # 管理员
+    
     path('getAllUsers_apis/', GetAllUsersView.as_view({"get": "list"})),
     path('getAllMoments_apis/', GetAllMomentsView.as_view({"get": "list"})),
     path('postBoard_apis/', PostBoardView.as_view({"post": "create"})),

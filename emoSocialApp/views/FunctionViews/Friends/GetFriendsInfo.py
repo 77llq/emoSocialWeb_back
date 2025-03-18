@@ -31,7 +31,7 @@ class GetFriendsInfoView(ModelViewSet):
             data = Friends.objects.filter(friendId=user_id)
             for item in data:
                 id = item.userId.id
-                intimacy = Friends.objects.get(userId_id=item.friendId).intimacy
+                intimacy = Friends.objects.get(userId_id=item.userId).intimacy  
                 name = UserProfile.objects.get(id=item.userId).name
                 avatar = UserProfile.objects.get(id=item.userId).avatar
                 signature = UserProfile.objects.get(id=item.userId).signature

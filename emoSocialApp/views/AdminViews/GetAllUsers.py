@@ -12,6 +12,7 @@ class GetAllUsersView(ModelViewSet):
         allUsers = []
         data = User.objects.all()
         for item in data:
+            print(item)
             obj = {
                 'id': item.id,
                 'account': item.account,

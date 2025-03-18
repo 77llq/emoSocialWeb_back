@@ -24,15 +24,14 @@ SECRET_KEY = 'django-insecure-dpwi_r08dx9lm*g4xtue-_)t1v_=!&v@yhsfo2%ivwjr1l*#95
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '128.0.0.1']
 
-# 头像保存路径
 USER_AVATAR_ROOT = os.path.join(BASE_DIR, 'static/images/user')
-# 朋友圈背景保存路径
+
 USER_PROFILEBP_ROOT = os.path.join(BASE_DIR, 'static/images/profileBp')
-# 朋友圈图片保存路径
+
 USER_MOMENTS_PIC_ROOT = os.path.join(BASE_DIR, 'static/images/moments')
-# 朋友圈视频保存路径
+
 USER_MOMENTS_VIDEO_ROOT = os.path.join(BASE_DIR, 'static/images/videos')
 # Application definition
 
@@ -59,6 +58,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://16.171.36.149:8080",
+]
+
+ALLOWED_HOSTS = [
+    '16.171.36.149',  
+    'localhost',      
+    '127.0.0.1',      
 ]
 
 ROOT_URLCONF = 'emoSocial_app.urls'
@@ -89,7 +98,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': "emosocialapp_db",
-        "HOST": "127.0.0.1",
+        "HOST": "localhost",
         "PORT": 3306,
         "USER": "root",
         "PASSWORD": "123456",
@@ -131,34 +140,34 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 发送邮件配置
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# smpt服务地址
+# smpt
 EMAIL_HOST = 'smtp.qq.com'
-EMAIL_PORT = 25  # 端口默认都是25不需要修改
-# 发送邮件的邮箱，需要配置开通SMTP
+EMAIL_PORT = 25  
+
 EMAIL_HOST_USER = '2785118462@qq.com'
-# 在邮箱中设置的客户端授权密码
-# 此处的EMAIL_HOST_PASSWORD是用QQ邮箱授权码登录
+
+
 EMAIL_HOST_PASSWORD = 'rkyyxhikizondggf'
-# 收件人看到的发件人
+
 EMAIL_FROM = '2785118462@qq.com'
 
-# JWT认证
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication'  # 使用rest_framework_simplejwt验证身份
+        'rest_framework_simplejwt.authentication.JWTAuthentication'  
     ],
-    #权限验证
+    
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated'    # 默认权限为验证用户
+        'rest_framework.permissions.IsAuthenticated'    
     ],
 }
-# simplejwt配置， 需要导入datetime模块
+
 SIMPLE_JWT = {
-    # token有效时长
+  
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=120),
-    # token刷新后的有效时间
+    
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
 
     "TOKEN_OBTAIN_SERIALIZER": "emoSocialApp.extensions.auth.MyTokenObtainPairSerializer",
